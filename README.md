@@ -23,16 +23,15 @@ REQUISITOS PREVIOS
 ESTRUCTURA DEL PROYECTO
 
 fft_web/
-│
-├── app.py          <-- Lógica del servidor (Python/Flask/NumPy)
-├── README.txt      <-- Este archivo
-│
-├── templates/
-│   └── index.html  <-- Interfaz de usuario (HTML)
-│
-└── static/
-    ├── style.css   <-- Estilos visuales
-    └── app.js      <-- Lógica del cliente (JavaScript)
+ app.py          <-- Lógica del servidor (Python/Flask/NumPy)
+ README.txt      <-- Este archivo
+
+ templates/
+  index.html  <-- Interfaz de usuario (HTML)
+
+ static/
+  style.css   <-- Estilos visuales
+  app.js      <-- Lógica del cliente (JavaScript)
 
 
 INSTALACIÓN Y EJECUCIÓN (MÉTODO SIMPLE)
@@ -95,3 +94,6 @@ DETENER EL SERVIDOR
 
 Para apagar la aplicación, ve a la terminal donde corre el servidor
 y presiona: Ctrl + C
+
+Link de la presentación
+https://www.canva.com/design/DAG9ybQQlTE/zttzULgW8jJiLSaBF7RljQ/edit?utm_content=DAG9ybQQlTE&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton

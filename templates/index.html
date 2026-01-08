@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Filtrado en Frecuencia</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>Filtros FFT2</h1>
+        <p>Proyecto Matemáticas Avanzadas 4CM5</p>
+      </div>
+
+      <div class="control-group">
+        <label class="label">1) Entrada (Imagen)</label>
+        <input id="file" type="file" accept=".png,.jpg,.jpeg"/>
+        <div class="hint">Se convierte a gris automáticamente.</div>
+      </div>
+
+      <div id="controlsFilter">
+        <div class="control-group">
+          <label class="label">Tipo de Filtro</label>
+          <select id="passType">
+            <option value="low">Pasa-bajas (Suavizado)</option>
+            <option value="high">Pasa-altas (Bordes)</option>
+            <option value="both">Comparar ambos</option>
+          </select>
+        </div>
+        
+        <div class="control-group">
+          <label class="label">Tipo de Máscara</label>
+          <select id="maskType">
+            <option value="ideal">Ideal (Círculo)</option>
+            <option value="gaussian">Gaussiana</option>
+          </select>
+        </div>
+        
+        <div id="idealControls" class="control-group">
+          <div class="inline-spread">
+            <label class="label">Radio de corte</label>
+            <span id="radiusLabel" class="value-badge">50</span>
+          </div>
+          <input id="radius" type="range" min="1" max="300" value="50" step="1"/>
+        </div>
+
+        <div id="gaussControls" class="control-group hidden">
+          <div class="inline-spread">
+            <label class="label">Sigma</label>
+            <span id="sigmaLabel" class="value-badge">50</span>
+          </div>
+          <input id="sigma" type="range" min="1" max="300" value="50" step="1"/>
+        </div>
+      </div>
+
+      <div class="control-group border-top">
+        <label class="inline-check">
+          <input id="addNoise" type="checkbox" /> Simular Ruido
+        </label>
+        <div class="control-subgroup">
+          <div class="inline-spread">
+            <label class="small">Sigma</label>
+            <span id="noiseSigmaLabel" class="value-badge">0.03</span>
+          </div>
+          <input id="noiseSigma" type="range" min="0" max="0.2" value="0.03" step="0.01"/>
+          
+          <div class="inline-spread" style="margin-top:8px;">
+            <label class="small">Semilla</label>
+            <input id="noiseSeed" type="number" min="0" max="999999" value="0" style="width:60px; padding:4px;"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="run" class="primary">PROCESAR FILTRO</button>
+        <div id="status" class="status">Listo.</div>
+      </div>
+    </aside>
+
+
+    <main class="workspace">
+      
+      <div class="metrics-bar">
+        <div class="metric-item">
+          <span class="m-label">MSE</span>
+          <span class="m-value" id="mse">-</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">PSNR (dB)</span>
+          <span class="m-value" id="psnr">-</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Nitidez</span>
+          <span class="m-value" id="sharp">-</span>
+        </div>
+        <div class="metric-info" id="note">
+          <b>Opción 3:</b> Filtros Pasa-bajas y Pasa-altas en el dominio de la frecuencia.
+        </div>
+      </div>
+
+      <div id="singleView">
+        <div class="main-stage">
+          <div class="view-panel">
+            <div class="panel-header">1. Imagen Original</div>
+            <div class="canvas-container">
+              <img id="imgOriginal" alt="Original"/>
+            </div>
+          </div>
+
+          <div class="view-panel">
+            <div class="panel-header">2. Reconstrucción (IFFT2)</div>
+            <div class="canvas-container">
+              <img id="imgRecon" alt="Reconstruida"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="analysis-stage">
+          <div class="view-panel">
+            <div class="panel-header">A. Espectro Entrada</div>
+            <div class="canvas-container">
+              <img id="imgSpecBefore" class="spectrum" alt="Espectro In"/>
+            </div>
+          </div>
+
+          <div class="view-panel" id="maskBlock"> 
+            <div class="panel-header">B. Máscara Aplicada</div>
+            <div class="canvas-container">
+               <img id="imgMask" class="spectrum" alt="Máscara"/>
+            </div>
+          </div>
+
+          <div class="view-panel">
+            <div class="panel-header">C. Espectro Salida</div>
+            <div class="canvas-container">
+              <img id="imgSpecAfter" class="spectrum" alt="Espectro Out"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="compareBlock" class="extra-panel hidden">
+        <h3 class="section-title">Comparación: Pasa-bajas vs Pasa-altas</h3>
+
+        <div class="main-stage">
+          <div class="view-panel">
+            <div class="panel-header">1. Imagen Original</div>
+            <div class="canvas-container">
+              <img id="imgOriginalCompare" alt="Original (Compare)"/>
+            </div>
+          </div>
+
+          <div class="view-panel">
+            <div class="panel-header">2. Reconstrucciones (IFFT2)</div>
+            <div class="canvas-container" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <div class="compare-item">
+                <div class="compare-title">Pasa-bajas</div>
+                <img id="imgReconLow" alt="Reconstruida Pasa-bajas"/>
+              </div>
+              <div class="compare-item">
+                <div class="compare-title">Pasa-altas</div>
+                <img id="imgReconHigh" alt="Reconstruida Pasa-altas"/>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analysis-stage">
+          <div class="view-panel">
+            <div class="panel-header">A. Espectro Entrada</div>
+            <div class="canvas-container">
+              <img id="imgSpecBeforeCompare" class="spectrum" alt="Espectro In (Compare)"/>
+            </div>
+          </div>
+
+          <div class="view-panel">
+            <div class="panel-header">B. Máscaras Aplicadas</div>
+            <div class="canvas-container" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <div class="compare-item">
+                <div class="compare-title">Máscara Low</div>
+                <img id="imgMaskLow" class="spectrum" alt="Máscara Low"/>
+              </div>
+              <div class="compare-item">
+                <div class="compare-title">Máscara High</div>
+                <img id="imgMaskHigh" class="spectrum" alt="Máscara High"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="view-panel">
+            <div class="panel-header">C. Espectros de Salida</div>
+            <div class="canvas-container" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <div class="compare-item">
+                <div class="compare-title">Salida Low</div>
+                <img id="imgSpecAfterLow" class="spectrum" alt="Espectro Out Low"/>
+              </div>
+              <div class="compare-item">
+                <div class="compare-title">Salida High</div>
+                <img id="imgSpecAfterHigh" class="spectrum" alt="Espectro Out High"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="extra-panel">
+        <h3 class="section-title">Marco Teórico</h3>
+        <ul class="list" style="color:var(--text-muted); padding-left:20px; line-height:1.6; font-size:0.9rem;">
+          <li><b>FFT2:</b> Descompone la imagen en frecuencias espaciales. El centro contiene las bajas frecuencias.</li>
+          <li><b>Pasa-bajas:</b> Conserva el centro del espectro. Elimina ruido pero suaviza bordes.</li>
+          <li><b>Pasa-altas:</b> Elimina el centro. Resalta bordes y transiciones rápidas.</li>
+        </ul>
+      </div>
+
+      <footer class="app-footer">
+         <div class="footer-divider"></div>
+         <div class="footer-content">
+             <div class="school-info">
+                 <span class="sc-name">ESCOM - IPN</span>
+                 <span class="sc-desc">Matemáticas Avanzadas para la Ingeniería</span>
+             </div>
+         </div>
+      </footer>
+
+    </main>
+
+  </div>
+
+  <div id="imageModal" class="modal">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="imgExpanded">
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

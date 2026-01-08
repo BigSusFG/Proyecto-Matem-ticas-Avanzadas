@@ -22,16 +22,14 @@ REQUISITOS PREVIOS
 
 ESTRUCTURA DEL PROYECTO
 
-fft_web/
- app.py          <-- Lógica del servidor (Python/Flask/NumPy)
- README.txt      <-- Este archivo
-
- templates/
-  index.html  <-- Interfaz de usuario (HTML)
-
- static/
-  style.css   <-- Estilos visuales
-  app.js      <-- Lógica del cliente (JavaScript)
+* **fft_web/**
+  * `app.py`: Lógica del servidor (Python/Flask/NumPy).
+  * `README.txt`: Documentación del proyecto.
+  * **templates/**
+    * `index.html`: Interfaz de usuario (HTML).
+  * **static/**
+    * `style.css`: Estilos visuales.
+    * `app.js`: Lógica del cliente (JavaScript).
 
 
 INSTALACIÓN Y EJECUCIÓN (MÉTODO SIMPLE)
